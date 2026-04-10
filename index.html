@@ -133,7 +133,7 @@
             useEffect(() => { localStorage.setItem('wedding_tasks', JSON.stringify(tasks)); }, [tasks]);
             useEffect(() => { localStorage.setItem('wedding_budget_goals', JSON.stringify(budgetGoals)); }, [budgetGoals]);
 
-            // D-day 계산 (4월 10일 기준 D-134 고정)
+            // D-day 계산 (2026-08-22 기준)
             const calculateDDay = () => {
                 const now = new Date();
                 const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -180,7 +180,6 @@
                 return diff === 0 ? "Today" : (diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`);
             };
 
-            // 정렬 로직: 긴박한 순(D-day 적은 순) -> 날짜 없는 순 -> 완료 항목 순
             const getSortedTasks = (catId) => {
                 return tasks
                     .filter(t => t.categoryId === catId)
@@ -208,7 +207,6 @@
                 setShowAddModal(false); setEditingTask(null); setNewTask({ title: '', categoryId: '', detail: '', date: '', price: '' });
             };
 
-            // 수정: 화살표를 이용한 카테고리 순서 이동 함수
             const moveCategory = (index, direction) => {
                 const newCats = [...categories];
                 if (direction === 'up' && index > 0) {
@@ -269,7 +267,6 @@
                             <div key={cat.id} className="mb-10 transition-all">
                                 <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
                                     <div className="flex items-center gap-2 flex-1 text-left">
-                                        {/* 수정: 드래그 대신 화살표 버튼으로 위치 변경 */}
                                         <div className="flex flex-col gap-0.5 mr-1">
                                             <button onClick={() => moveCategory(index, 'up')} className={`p-1 ${index === 0 ? 'text-slate-100' : 'text-slate-300 active:text-rose-400'}`} disabled={index === 0}>
                                                 <Icon name="arrowUp" size={14} />
@@ -304,7 +301,10 @@
                                                     </button>
                                                     <div className="flex-1 min-w-0 text-left cursor-pointer" onClick={() => { setEditingTask(task); setNewTask({ title: task.title, categoryId: task.categoryId, detail: task.detail || '', date: task.date || '', price: (task.price || "").toString() }); setShowAddModal(true); }}>
                                                         <h3 className={`text-[13px] font-bold truncate ${task.status === 'done' ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{task.title}</h3>
-                                                        <p className="text-[10px] text-slate-400 mt-0.5">{formatWithCommas(task.price)}원 | {task.status === 'done' ? '완료' : task.status === 'doing' ? '진행 중' : '시작 전'}</p>
+                                                        {/* 수정 사항: 메인 리스트에 날짜 표시 추가 */}
+                                                        <p className="text-[10px] text-slate-400 mt-0.5">
+                                                            <span className="font-bold text-slate-500 mr-1">{task.date || '날짜 미정'}</span> | {formatWithCommas(task.price)}원 | {task.status === 'done' ? '완료' : task.status === 'doing' ? '진행 중' : '시작 전'}
+                                                        </p>
                                                     </div>
                                                     <div className="flex flex-col items-end gap-1 flex-shrink-0">
                                                         {tDDay && task.status !== 'done' && <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-rose-50 text-rose-500 tracking-tighter">{tDDay}</span>}
@@ -320,7 +320,6 @@
                         <button onClick={() => setShowNewCategoryModal(true)} className="w-full py-5 bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl text-slate-400 text-xs font-bold flex items-center justify-center gap-2 mb-16"><Icon name="plus" size={14}/> 카테고리 추가</button>
 
                         <div className="flex flex-col md:flex-row gap-6 mt-12 pt-10 border-t border-slate-50 text-left pb-16">
-                            {/* 예산(Budget) 섹션 먼저 배치 */}
                             <section className="flex-[1.5]">
                                 <h2 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4">Budget</h2>
                                 <div className="space-y-3">
@@ -355,7 +354,6 @@
                                 </div>
                             </section>
 
-                            {/* 환율(Exchange) 섹션 */}
                             <section className="flex-1">
                                 <div className="flex justify-between items-center mb-4">
                                     <h2 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Exchange</h2>
@@ -393,7 +391,6 @@
                                     <input type="text" value={newTask.title} onChange={e => setNewTask({...newTask, title: e.target.value})} placeholder="어떤 일을 해야 하나요?" className="w-full bg-slate-50 rounded-2xl px-5 py-4 text-sm font-medium outline-none focus:ring-2 focus:ring-slate-200" />
                                     <div className="grid grid-cols-2 gap-3">
                                         <input type="date" value={newTask.date} onChange={e => setNewTask({...newTask, date: e.target.value})} />
-                                        {/* 수정: inputMode="numeric" 속성 추가하여 숫자 전용 자판 호출 */}
                                         <input 
                                             type="text" 
                                             inputMode="numeric"
@@ -417,7 +414,7 @@
                         </div>
                     )}
 
-                    {/* 모달: 예산 목표 (숫자 자판 최적화) */}
+                    {/* 모달: 예산 목표 */}
                     {showGoalModal && (
                         <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-fade-in text-left">
                             <div className="bg-white w-full max-w-xs rounded-3xl shadow-2xl p-8 text-left">
@@ -451,9 +448,21 @@
                         </div>
                     )}
                     
+                    {/* 수정 사항: 카테고리 수정 모달 (이름 수정 가능) */}
                     {showCategoryEditModal && (
                         <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm animate-fade-in text-left">
-                            <div className="bg-white w-full max-w-xs rounded-2xl shadow-2xl p-6"><h3 className="text-sm font-bold text-slate-900 mb-6 font-black text-center">Category Options</h3><div className="space-y-4"><input maxLength={2} className="w-full bg-slate-50 rounded-xl py-4 text-2xl text-center outline-none border-2 border-transparent focus:border-slate-100" value={categoryForm.icon} onChange={e => setCategoryForm({...categoryForm, icon: e.target.value})} /><input className="w-full bg-slate-50 rounded-xl px-4 py-3 text-sm outline-none font-bold focus:ring-2 focus:ring-slate-100" value={categoryForm.name} onChange={e => setCategoryForm({...categoryForm, name: e.target.value})} /><div className="flex gap-2"><button onClick={() => setShowCategoryEditModal(false)} className="flex-1 py-3 text-[11px] font-bold text-slate-400">Cancel</button><button onClick={async () => { setCategories(categories.map(c => c.id === activeCategory.id ? { ...c, ...categoryForm } : c)); setShowCategoryEditModal(false); }} className="flex-1 bg-slate-900 text-white py-3 rounded-xl text-[11px] font-bold shadow-lg">저장</button></div></div></div>
+                            <div className="bg-white w-full max-w-xs rounded-2xl shadow-2xl p-6">
+                                <h3 className="text-sm font-bold text-slate-900 mb-6 font-black text-center">카테고리 수정</h3>
+                                <div className="space-y-4">
+                                    <p className="text-[10px] text-slate-400 text-center">아이콘과 이름을 수정할 수 있습니다.</p>
+                                    <input maxLength={2} className="w-full bg-slate-50 rounded-xl py-4 text-2xl text-center outline-none border-2 border-transparent focus:border-slate-100" value={categoryForm.icon} onChange={e => setCategoryForm({...categoryForm, icon: e.target.value})} />
+                                    <input className="w-full bg-slate-50 rounded-xl px-4 py-3 text-sm outline-none font-bold focus:ring-2 focus:ring-slate-100" value={categoryForm.name} onChange={e => setCategoryForm({...categoryForm, name: e.target.value})} />
+                                    <div className="flex gap-2">
+                                        <button onClick={() => setShowCategoryEditModal(false)} className="flex-1 py-3 text-[11px] font-bold text-slate-400">취소</button>
+                                        <button onClick={() => { setCategories(categories.map(c => c.id === activeCategory.id ? { ...c, ...categoryForm } : c)); setShowCategoryEditModal(false); }} className="flex-1 bg-slate-900 text-white py-3 rounded-xl text-[11px] font-bold shadow-lg">저장</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>
